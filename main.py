@@ -111,7 +111,7 @@ async def chat(req: ChatRequest):
                 logger.info("Making final GPT call with tool results...")
                 try:
                     final = client.chat.completions.create(
-                        model="gpt-4",
+                        model="gpt-4o-mini",
                         messages=[
                             {"role": "system", "content": "You are a helpful shopping assistant."},
                             {"role": "user", "content": req.message},
