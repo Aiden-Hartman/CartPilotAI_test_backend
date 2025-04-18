@@ -16,7 +16,7 @@ async def chat(req: ChatRequest):
 
     # Step 1: Initial GPT call
     response = client.chat.completions.create(
-        model="gpt-4",
+        model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "You are a helpful shopping assistant."},
             {"role": "user", "content": user_message}
