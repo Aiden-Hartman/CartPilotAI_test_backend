@@ -2,8 +2,19 @@ from fastapi import FastAPI, Request
 from pydantic import BaseModel
 from openai import OpenAI
 import os
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+# Allow frontend to access the backend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # You can lock this down to your frontend domain later
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))  # Set this in Render
 
 class ChatRequest(BaseModel):
