@@ -60,7 +60,7 @@ async def chat(req: ChatRequest):
         logger.info("Making initial GPT call...")
         try:
             response = client.chat.completions.create(
-                model="gpt-4o-mini",  # Make sure this matches your intended model
+                model="gpt-4o",
                 messages=[
                     {"role": "system", "content": "You are a helpful shopping assistant."},
                     {"role": "user", "content": req.message}
@@ -91,13 +91,15 @@ async def chat(req: ChatRequest):
         if response.choices[0].finish_reason == "tool_calls":
             logger.info("Tool call detected, processing...")
             try:
+                # Extract tool call details
                 tool_call = response.choices[0].message.tool_calls[0]
-                logger.info(f"Tool call details: {tool_call.function.name}")
-                logger.info(f"Tool arguments: {tool_call.function.arguments}")
-                
+                tool_call_id = tool_call.id
                 tool_args = json.loads(tool_call.function.arguments)
-                query = tool_args['query']
-                logger.info(f"Extracted query: {query}")
+                tool_query = tool_args['query']
+                
+                logger.info(f"Tool call ID: {tool_call_id}")
+                logger.info(f"Tool call details: {tool_call.function.name}")
+                logger.info(f"Tool query: {tool_query}")
 
                 # Step 3: Run the tool (replace with real DB query later)
                 logger.info("Generating fake results (to be replaced with real DB query)")
@@ -111,11 +113,29 @@ async def chat(req: ChatRequest):
                 logger.info("Making final GPT call with tool results...")
                 try:
                     final = client.chat.completions.create(
-                        model="gpt-4o-mini",
+                        model="gpt-4o",
                         messages=[
                             {"role": "system", "content": "You are a helpful shopping assistant."},
                             {"role": "user", "content": req.message},
-                            {"role": "tool", "name": "recommend_products", "content": str(fake_results)}
+                            {
+                                "role": "assistant",
+                                "content": None,
+                                "tool_calls": [
+                                    {
+                                        "id": tool_call_id,
+                                        "type": "function",
+                                        "function": {
+                                            "name": "recommend_products",
+                                            "arguments": json.dumps({"query": tool_query})
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "role": "tool",
+                                "tool_call_id": tool_call_id,
+                                "content": json.dumps(fake_results)
+                            }
                         ]
                     )
                     log_openai_response(final, "final")
